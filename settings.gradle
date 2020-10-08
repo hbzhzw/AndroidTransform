@@ -1,0 +1,31 @@
+pluginManagement {
+    repositories {
+        mavenLocal()
+
+        maven {
+            name "TencentPublic"
+            url "https://mirrors.tencent.com/repository/maven/tencent_public/"
+        }
+
+        maven {
+            name "TencentNexusPublic"
+            url "https://mirrors.tencent.com/nexus/repository/maven-public/"
+        }
+//        gradlePluginPortal()
+    }
+
+    plugins {
+        id 'com.example.plugin.greeting' version "1.0.0"
+    }
+
+    resolutionStrategy {
+        eachPlugin {
+            println "request.id.namespace: ${requested.id.namespace}"
+            if (requested.id.namespace == 'com.example.plugin') {
+                useModule('com.tencent.qqsports.transfom.plugin:DemoTransform:1.0.0')
+            }
+        }
+    }
+}
+
+include ':app', ':librxstudy', ':plugindemo'

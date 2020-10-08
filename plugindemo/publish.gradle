@@ -1,0 +1,102 @@
+/** 使用示例
+apply from: '../gradle/publish.gradle'
+group = 'com.tencent.qqsports'
+version = '1.0.0'
+ext.artifactId = "channel-sdk"
+**/
+apply plugin: 'maven-publish'
+ext {
+    global_repo_name = "tencentRepo"
+    global_repo = "https://mirrors.tencent.com/repository/maven/qqsports-public"
+    global_repo_snapshot = "https://mirrors.tencent.com/repository/maven/qqsports-public-snapshots"
+    global_repo_user_name = "g_qqSportsAndroid"
+    global_repo_passwd = "6e7a624c9b2c11eaba0c6c92bf47000d"
+}
+
+def getPublishVersion() {
+    if (DEFAULT_VERSION != project.version) {
+        return project.version
+    }
+    return '1.0.0'
+}
+
+def getPublishGroupId() {
+    if (project.group) {
+        return project.group
+    }
+    return 'com.tencent.qqsports'
+}
+
+def getPublishArtifactId() {
+    if (project.ext.has("artifactId")) {
+        return project.ext.get("artifactId")
+    }
+    return project.name
+}
+
+def findDepArtifactId(String projName) {
+    def depProj = rootProject.findProject(projName)
+    if (depProj) {
+        if (depProj.ext.has("artifactId")) {
+            return depProj.ext.get("artifactId")
+        }
+    }
+    return projName
+}
+
+def getArtifactTask() {
+    if (project.plugins.findPlugin('com.android.library')) {
+        return bundleReleaseAar
+        // return bundleDebugAar
+    }
+    return jar
+}
+
+def getDepArtifactVersion(String projName, String depVersion) {
+    def depProj = rootProject.findProject(projName)
+    if (depProj) {
+        return depProj.version
+    }
+    return depVersion
+}
+
+def isNeedIncludeDeps() {
+    if (project.ext.has("includeDeps")) {
+        return project.ext.get("includeDeps") as Boolean
+    }
+    return false
+}
+
+project.afterEvaluate {
+    println "publish task config: ${getPublishGroupId()}:${getPublishArtifactId()}:${getPublishVersion()}"
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = getPublishGroupId()
+                artifactId = getPublishArtifactId()
+                version = getPublishVersion()
+                artifact jar
+                // artifact getArtifactTask()
+                // artifact androidJavadocsJar
+                // artifact androidSourcesJar
+
+            }
+        }
+
+        repositories {
+            maven {
+                name = global_repo_name
+                def releasesRepoUrl = global_repo
+                def snapshotsRepoUrl = global_repo_snapshot
+                url = getPublishVersion().endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username global_repo_user_name
+                    password global_repo_passwd
+                }
+                authentication{
+                    basic(BasicAuthentication)
+                }
+            }
+        }
+    }
+}
